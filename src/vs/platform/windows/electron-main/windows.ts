@@ -39,7 +39,7 @@ export interface ICodeWindow extends IDisposable {
 
 	readonly id: number;
 	readonly win: BrowserWindow;
-	readonly config: IWindowConfiguration;
+	readonly config: IWindowConfiguration | undefined;
 
 	readonly openedFolderUri?: URI;
 	readonly openedWorkspace?: IWorkspaceIdentifier;
@@ -76,7 +76,7 @@ export interface ICodeWindow extends IDisposable {
 	hasHiddenTitleBarStyle(): boolean;
 
 	setRepresentedFilename(name: string): void;
-	getRepresentedFilename(): string;
+	getRepresentedFilename(): string | undefined;
 
 	handleTitleDoubleClick(): void;
 

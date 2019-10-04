@@ -73,22 +73,19 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 	private readonly _onWindowLoad = this._register(new Emitter<ICodeWindow>());
 	readonly onWindowLoad: CommonEvent<ICodeWindow> = this._onWindowLoad.event;
 
-	private hiddenTitleBarStyle: boolean;
-	private showTimeoutHandle: NodeJS.Timeout;
-	private _id: number;
-	private _win: BrowserWindow;
+	private hiddenTitleBarStyle: boolean | undefined;
+	private showTimeoutHandle: NodeJS.Timeout | undefined;
 	private _lastFocusTime: number;
 	private _readyState: ReadyState;
 	private windowState: IWindowState;
-	private currentMenuBarVisibility: MenuBarVisibility;
-	private representedFilename: string;
+	private currentMenuBarVisibility: MenuBarVisibility | undefined;
+	private representedFilename: string | undefined;
 
 	private readonly whenReadyCallbacks: { (window: ICodeWindow): void }[];
 
-	private currentConfig: IWindowConfiguration;
 	private pendingLoadConfig?: IWindowConfiguration;
 
-	private marketplaceHeadersPromise: Promise<object>;
+	private marketplaceHeadersPromise: Promise<object> | undefined;
 
 	private readonly touchBarGroups: TouchBarSegmentedControl[];
 
@@ -231,28 +228,25 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		this._lastFocusTime = Date.now(); // since we show directly, we need to set the last focus time too
 	}
 
+	private currentConfig: IWindowConfiguration | undefined;
+	get config(): IWindowConfiguration | undefined { return this.currentConfig; }
+
+	private _id! /* assigned from ctor */: number;
+	get id(): number { return this._id; }
+
+	private _win! /* assigned from ctor */: BrowserWindow;
+	get win(): BrowserWindow { return this._win; }
+
 	hasHiddenTitleBarStyle(): boolean {
-		return this.hiddenTitleBarStyle;
+		return !!this.hiddenTitleBarStyle;
 	}
 
 	get isExtensionDevelopmentHost(): boolean {
-		return !!this.config.extensionDevelopmentPath;
+		return !!(this.config && this.config.extensionDevelopmentPath);
 	}
 
 	get isExtensionTestHost(): boolean {
-		return !!this.config.extensionTestsPath;
-	}
-
-	get config(): IWindowConfiguration {
-		return this.currentConfig;
-	}
-
-	get id(): number {
-		return this._id;
-	}
-
-	get win(): BrowserWindow {
-		return this._win;
+		return !!(this.config && this.config.extensionTestsPath);
 	}
 
 	setRepresentedFilename(filename: string): void {
@@ -263,7 +257,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		}
 	}
 
-	getRepresentedFilename(): string {
+	getRepresentedFilename(): string | undefined {
 		if (isMacintosh) {
 			return this.win.getRepresentedFilename();
 		}
@@ -350,7 +344,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		// Inject headers when requests are incoming
 		const urls = ['https://marketplace.visualstudio.com/*', 'https://*.vsassets.io/*'];
 		this._win.webContents.session.webRequest.onBeforeSendHeaders({ urls }, (details, cb) => {
-			this.marketplaceHeadersPromise.then(headers => {
+			this.marketplaceHeadersPromise!.then(headers => {
 				const requestHeaders = objects.assign(details.requestHeaders, headers) as { [key: string]: string | undefined };
 				if (!this.configurationService.getValue('extensions.disableExperimentalAzureSearch')) {
 					requestHeaders['Cookie'] = `${requestHeaders['Cookie'] ? requestHeaders['Cookie'] + ';' : ''}EnableExternalSearchForVSCode=true`;
@@ -551,7 +545,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 
 		// Make sure to update our workspace config if we detect that it
 		// was deleted
-		if (this.openedWorkspace && this.openedWorkspace.id === workspace.id) {
+		if (this.openedWorkspace && this.openedWorkspace.id === workspace.id && this.currentConfig) {
 			this.currentConfig.workspace = undefined;
 		}
 	}
@@ -975,7 +969,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 		return menuBarVisibility;
 	}
 
-	private setMenuBarVisibility(visibility: MenuBarVisibility, notify: boolean = true): void {
+	private setMenuBarVisibility(visibility: MenuBarVisibility | undefined, notify: boolean = true): void {
 		if (isMacintosh) {
 			return; // ignore for macOS platform
 		}
@@ -995,7 +989,7 @@ export class CodeWindow extends Disposable implements ICodeWindow {
 			setTimeout(() => {
 				this.doSetMenuBarVisibility(visibility);
 			});
-		} else {
+		} else if (visibility) {
 			this.doSetMenuBarVisibility(visibility);
 		}
 	}

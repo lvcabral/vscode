@@ -44,8 +44,8 @@ export class Menubar {
 
 	private static readonly lastKnownMenubarStorageKey = 'lastKnownMenubarData';
 
-	private willShutdown: boolean;
-	private appMenuInstalled: boolean;
+	private willShutdown: boolean | undefined;
+	private appMenuInstalled: boolean | undefined;
 	private closedLastWindow: boolean;
 
 	private menuUpdater: RunOnceScheduler;
