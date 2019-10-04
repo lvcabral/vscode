@@ -369,6 +369,19 @@ export class WindowsMainService extends Disposable implements IWindowsMainServic
 		};
 	}
 
+	openEmptyWindow(context: OpenContext, options?: IOpenEmptyWindowOptions): ICodeWindow[] {
+		let cli = this.environmentService.args;
+		const remote = options && options.remoteAuthority;
+		if (cli && (cli.remote !== remote)) {
+			cli = { ...cli, remote };
+		}
+
+		const forceReuseWindow = options && options.forceReuseWindow;
+		const forceNewWindow = !forceReuseWindow;
+
+		return this.open({ context, cli, forceEmpty: true, forceNewWindow, forceReuseWindow });
+	}
+
 	open(openConfig: IOpenConfiguration): ICodeWindow[] {
 		this.logService.trace('windowsManager#open');
 		openConfig = this.validateOpenConfig(openConfig);
@@ -1604,19 +1617,6 @@ export class WindowsMainService extends Disposable implements IWindowsMainServic
 
 	private getLastActiveWindowForAuthority(remoteAuthority: string | undefined): ICodeWindow | undefined {
 		return getLastActiveWindow(WindowsMainService.WINDOWS.filter(window => window.remoteAuthority === remoteAuthority));
-	}
-
-	openEmptyWindow(context: OpenContext, options?: IOpenEmptyWindowOptions): ICodeWindow[] {
-		let cli = this.environmentService.args;
-		const remote = options && options.remoteAuthority;
-		if (cli && (cli.remote !== remote)) {
-			cli = { ...cli, remote };
-		}
-
-		const forceReuseWindow = options && options.forceReuseWindow;
-		const forceNewWindow = !forceReuseWindow;
-
-		return this.open({ context, cli, forceEmpty: true, forceNewWindow, forceReuseWindow });
 	}
 
 	sendToFocused(channel: string, ...args: any[]): void {
